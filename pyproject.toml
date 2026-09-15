@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "momentshow"
+version = "0.1.0"
+description = "Open local WeChat, read visible Moments from the screen, and keep a private timeline."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "pyobjc-core>=10.0",
+  "pyobjc-framework-Cocoa>=10.0",
+  "pyobjc-framework-Quartz>=10.0",
+  "pyobjc-framework-ApplicationServices>=10.0",
+  "pyobjc-framework-Vision>=10.0",
+]
+
+[project.scripts]
+momentshow = "momentshow.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["momentshow*"]
+
+[tool.setuptools.package-data]
+momentshow = ["web/*"]

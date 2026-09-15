@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MomentShow 朋友圈时间线</title>
+  <style>
+    :root {
+      --bg: #f3efe6;
+      --card: #fffaf2;
+      --ink: #1f1a16;
+      --muted: #74685c;
+      --line: #e4d8c8;
+      --accent: #2f6f5e;
+      --accent-ink: #f6fffb;
+      --warn: #8a4b2a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "PingFang SC", "Hiragino Sans GB", sans-serif;
+      background: radial-gradient(circle at top, #fff8ec, var(--bg));
+      color: var(--ink);
+    }
+    main {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 32px 20px 80px;
+    }
+    h1 {
+      font-size: 28px;
+      margin: 0 0 8px;
+    }
+    .lede {
+      color: var(--muted);
+      margin: 0 0 24px;
+      line-height: 1.6;
+    }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: end;
+      margin-bottom: 24px;
+    }
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    select, input {
+      min-width: 140px;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: white;
+      color: var(--ink);
+      font: inherit;
+    }
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 16px;
+      background: var(--accent);
+      color: var(--accent-ink);
+      font: inherit;
+      cursor: pointer;
+    }
+    button.secondary {
+      background: white;
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+    .status {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-bottom: 20px;
+      color: var(--muted);
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }
+    .feed {
+      display: grid;
+      gap: 14px;
+    }
+    article {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px 18px;
+    }
+    .meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+    .author { font-weight: 650; }
+    .when { color: var(--muted); }
+    .body {
+      white-space: pre-wrap;
+      line-height: 1.7;
+    }
+    .empty {
+      color: var(--muted);
+      padding: 40px 8px;
+      text-align: center;
+    }
+    .warn { color: var(--warn); }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>朋友圈时间线</h1>
+    <p class="lede">打开本机已登录的微信，读取当前屏幕上可见的朋友圈，并只存在这台电脑上。采集时请不要操作鼠标。</p>
+    <div class="toolbar">
+      <label>
+        按人筛选
+        <select id="author">
+          <option value="">全部</option>
+        </select>
+      </label>
+      <label>
+        滚动屏数
+        <input id="scrolls" type="number" min="1" max="20" value="8" />
+      </label>
+      <button id="capture" type="button">打开微信并采集</button>
+      <button id="manual" class="secondary" type="button">采集当前窗口</button>
+    </div>
+    <div class="status" id="status">正在读取本地库…</div>
+    <section class="feed" id="feed"></section>
+  </main>
+  <script>
+    const statusEl = document.getElementById("status");
+    const feedEl = document.getElementById("feed");
+    const authorEl = document.getElementById("author");
+    const scrollsEl = document.getElementById("scrolls");
+    const captureBtn = document.getElementById("capture");
+    const manualBtn = document.getElementById("manual");
+
+    async function loadStatus() {
+      const data = await fetchJSON("/api/status");
+      const bits = [
+        `本地 ${data.total} 条，${data.authors} 人`,
+        data.wechat_running ? "微信已在运行" : "微信未打开",
+        data.accessibility ? "辅助功能已授权" : "辅助功能未授权",
+      ];
+      statusEl.textContent = bits.join(" · ");
+    }
+
+    async function loadAuthors() {
+      const authors = await fetchJSON("/api/authors");
+      const current = authorEl.value;
+      authorEl.innerHTML = '<option value="">全部</option>';
+      for (const name of authors) {
+        const option = document.createElement("option");
+        option.value = name;
+        option.textContent = name;
+        authorEl.appendChild(option);
+      }
+      if ([...authorEl.options].some((item) => item.value === current)) {
+        authorEl.value = current;
+      }
+    }
+
+    async function loadMoments() {
+      const author = encodeURIComponent(authorEl.value);
+      const items = await fetchJSON("/api/moments?author=" + author);
+      feedEl.innerHTML = "";
+      if (!items.length) {
+        feedEl.innerHTML = '<div class="empty">还没有条目。点「打开微信并采集」，或先手动打开朋友圈再点「采集当前窗口」。</div>';
+        return;
+      }
+      for (const item of items) {
+        const article = document.createElement("article");
+        const when = item.time_text || formatTime(item.captured_at);
+        article.innerHTML =
+          '<div class="meta"><span class="author"></span><span class="when"></span></div>' +
+          '<div class="body"></div>';
+        article.querySelector(".author").textContent = item.author || "未知";
+        article.querySelector(".when").textContent = when;
+        article.querySelector(".body").textContent = item.body || "（无文字，可能是图片动态）";
+        feedEl.appendChild(article);
+      }
+    }
+
+    async function capture(manual) {
+      captureBtn.disabled = true;
+      manualBtn.disabled = true;
+      statusEl.textContent = manual
+        ? "正在采集当前微信窗口，请稍候…"
+        : "正在打开微信并采集朋友圈，请不要操作鼠标…";
+      try {
+        const result = await fetchJSON("/api/capture", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            scrolls: Number(scrollsEl.value || 8),
+            manual,
+          }),
+        });
+        const warnings = (result.warnings || []).join("\n");
+        statusEl.innerHTML = "";
+        statusEl.append(result.message || "采集结束");
+        if (warnings) {
+          const warn = document.createElement("div");
+          warn.className = "warn";
+          warn.textContent = warnings;
+          statusEl.appendChild(warn);
+        }
+        await loadAuthors();
+        await loadMoments();
+      } catch (err) {
+        statusEl.textContent = String(err.message || err);
+      } finally {
+        captureBtn.disabled = false;
+        manualBtn.disabled = false;
+      }
+    }
+
+    async function fetchJSON(url, options) {
+      const response = await fetch(url, options);
+      const data = await response.json();
+      if (!response.ok && !data.message) {
+        throw new Error("请求失败：" + response.status);
+      }
+      if (data && data.ok === false && data.message) {
+        throw new Error(data.message);
+      }
+      return data;
+    }
+
+    function formatTime(iso) {
+      if (!iso) return "";
+      const date = new Date(iso);
+      if (Number.isNaN(date.getTime())) return iso;
+      return date.toLocaleString("zh-CN", { hour12: false });
+    }
+
+    authorEl.addEventListener("change", loadMoments);
+    captureBtn.addEventListener("click", () => capture(false));
+    manualBtn.addEventListener("click", () => capture(true));
+    Promise.all([loadStatus(), loadAuthors(), loadMoments()]).catch((err) => {
+      statusEl.textContent = String(err.message || err);
+    });
+  </script>
+</body>
+</html>
