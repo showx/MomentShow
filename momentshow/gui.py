@@ -8,6 +8,7 @@ import urllib.request
 from AppKit import (
     NSApplication,
     NSBackingStoreBuffered,
+    NSImage,
     NSMakeRect,
     NSWindow,
     NSWindowStyleMaskClosable,
@@ -20,6 +21,7 @@ from WebKit import WKWebView, WKWebViewConfiguration
 
 from momentshow.app import create_server
 from momentshow.env import load_dotenv
+from momentshow.paths import app_icon_path
 
 DEFAULT_PORT = 8765
 
@@ -40,6 +42,7 @@ def run_gui(host: str = "127.0.0.1", port: int = DEFAULT_PORT) -> int:
 
     app = NSApplication.sharedApplication()
     app.setActivationPolicy_(0)
+    _apply_app_icon(app)
     delegate = AppDelegate.alloc().init()
     app.setDelegate_(delegate)
 
@@ -69,6 +72,15 @@ def run_gui(host: str = "127.0.0.1", port: int = DEFAULT_PORT) -> int:
     app.run()
     httpd.shutdown()
     return 0
+
+
+def _apply_app_icon(app) -> None:
+    path = app_icon_path()
+    if not path.is_file():
+        return
+    image = NSImage.alloc().initWithContentsOfFile_(str(path))
+    if image is not None:
+        app.setApplicationIconImage_(image)
 
 
 def _bind_server(host: str, port: int):

@@ -24,4 +24,4 @@ momentshow = "momentshow.cli:main"
 include = ["momentshow*"]
 
 [tool.setuptools.package-data]
-momentshow = ["web/*"]
+momentshow = ["web/*", "assets/*"]

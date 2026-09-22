@@ -5,6 +5,7 @@ import unittest
 import urllib.request
 
 from momentshow.app import create_server
+from momentshow.paths import app_icon_path
 
 
 class AppTests(unittest.TestCase):
@@ -25,7 +26,10 @@ class AppTests(unittest.TestCase):
         self.assertIn('id="tab-moments"', html)
         self.assertIn("读取窗口", html)
         self.assertIn("打开微信并采集", html)
-        self.assertIn("class=\"split\"", html)
+        self.assertIn('class="split"', html)
+
+    def test_app_icon_exists(self) -> None:
+        self.assertTrue(app_icon_path().is_file())
 
 
 if __name__ == "__main__":

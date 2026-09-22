@@ -26,7 +26,7 @@ pip install -e .
 
 ## 使用
 
-双击 `MomentShow.command`，或：
+双击 `MomentShow.app`，或：
 
 ```bash
 momentshow
