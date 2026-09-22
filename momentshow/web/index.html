@@ -3,55 +3,290 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>MomentShow 朋友圈时间线</title>
+  <title>MomentShow</title>
   <style>
     :root {
-      --bg: #f3efe6;
-      --card: #fffaf2;
-      --ink: #1f1a16;
-      --muted: #74685c;
-      --line: #e4d8c8;
-      --accent: #2f6f5e;
-      --accent-ink: #f6fffb;
-      --warn: #8a4b2a;
+      --bg: #f4f5f7;
+      --panel: #ffffff;
+      --ink: #1d1d1f;
+      --muted: #6e6e73;
+      --line: #e5e5ea;
+      --accent: #0b7a5c;
+      --accent-soft: #e7f6f0;
+      --accent-ink: #ffffff;
+      --me: #d7f3e6;
+      --them: #f2f2f7;
+      --warn: #b42318;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(29, 29, 31, 0.06);
     }
     * { box-sizing: border-box; }
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
     body {
       margin: 0;
-      font-family: "PingFang SC", "Hiragino Sans GB", sans-serif;
-      background: radial-gradient(circle at top, #fff8ec, var(--bg));
+      font-family: "SF Pro Text", "PingFang SC", "Hiragino Sans GB", sans-serif;
+      background: var(--bg);
       color: var(--ink);
     }
-    main {
-      max-width: 860px;
-      margin: 0 auto;
-      padding: 32px 20px 80px;
+    .shell {
+      height: 100%;
+      display: grid;
+      grid-template-rows: auto 1fr;
     }
-    h1 {
-      font-size: 28px;
-      margin: 0 0 8px;
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 20px 12px;
+      background: rgba(255, 255, 255, 0.82);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: saturate(140%) blur(16px);
     }
-    .lede {
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 160px;
+    }
+    .mark {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: linear-gradient(160deg, #19a07a, #0b7a5c);
+      color: white;
+      display: grid;
+      place-items: center;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+    }
+    .brand h1 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 650;
+      letter-spacing: -0.02em;
+    }
+    .brand p {
+      margin: 1px 0 0;
       color: var(--muted);
-      margin: 0 0 24px;
+      font-size: 11px;
+    }
+    .seg {
+      display: flex;
+      padding: 3px;
+      border-radius: 10px;
+      background: #e8e8ed;
+    }
+    .seg button {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: var(--ink);
+      min-width: 88px;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font: inherit;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .seg button.on {
+      background: white;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+      font-weight: 600;
+    }
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 6px;
+      max-width: 46%;
+    }
+    .chip {
+      font-size: 11px;
+      color: var(--muted);
+      background: #eeeef2;
+      border-radius: 999px;
+      padding: 4px 8px;
+      white-space: nowrap;
+    }
+    .chip.ok { background: var(--accent-soft); color: var(--accent); }
+    .chip.warn { background: #fdecea; color: var(--warn); }
+    .page {
+      min-height: 0;
+      padding: 16px 20px 20px;
+    }
+    .split {
+      height: 100%;
+      display: grid;
+      grid-template-columns: minmax(280px, 1fr) minmax(300px, 1fr);
+      gap: 14px;
+    }
+    .pane {
+      min-height: 0;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      display: grid;
+      grid-template-rows: auto 1fr;
+      overflow: hidden;
+    }
+    .pane-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+    }
+    .pane-head h2 {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 650;
+    }
+    .hint {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .pane-body {
+      min-height: 0;
+      overflow: auto;
+      padding: 14px 16px 16px;
+    }
+    button.primary, button.ghost {
+      appearance: none;
+      border: 0;
+      border-radius: 10px;
+      padding: 8px 12px;
+      font: inherit;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    button.primary {
+      background: var(--accent);
+      color: var(--accent-ink);
+    }
+    button.ghost {
+      background: #f2f2f7;
+      color: var(--ink);
+    }
+    button:disabled {
+      opacity: 0.55;
+      cursor: wait;
+    }
+    .note {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+      margin-bottom: 12px;
+      white-space: pre-wrap;
+    }
+    .note .warn { color: var(--warn); display: block; margin-top: 6px; }
+    .thread {
+      display: grid;
+      gap: 10px;
+    }
+    .bubble {
+      max-width: 86%;
+      padding: 8px 12px 9px;
+      border-radius: 14px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      font-size: 14px;
+    }
+    .bubble.them {
+      justify-self: start;
+      background: var(--them);
+      border-bottom-left-radius: 5px;
+    }
+    .bubble.me {
+      justify-self: end;
+      background: var(--me);
+      border-bottom-right-radius: 5px;
+    }
+    .who {
+      display: block;
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 3px;
+    }
+    .empty {
+      height: 100%;
+      min-height: 180px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      color: var(--muted);
       line-height: 1.6;
+      font-size: 13px;
+      padding: 24px;
+    }
+    .drafts {
+      display: grid;
+      gap: 10px;
+    }
+    .draft {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 12px 12px;
+      background: #fbfbfc;
+    }
+    .draft-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .badge {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent);
+      background: var(--accent-soft);
+      border-radius: 999px;
+      padding: 3px 8px;
+    }
+    textarea {
+      width: 100%;
+      min-height: 68px;
+      resize: vertical;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font: inherit;
+      font-size: 13px;
+      color: var(--ink);
+      background: white;
+    }
+    textarea:focus, select:focus, input:focus, button:focus-visible {
+      outline: 2px solid rgba(11, 122, 92, 0.28);
+      outline-offset: 1px;
+    }
+    .draft-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
     }
     .toolbar {
       display: flex;
       flex-wrap: wrap;
-      gap: 12px;
+      gap: 10px;
       align-items: end;
-      margin-bottom: 24px;
+      margin-bottom: 14px;
     }
-    label {
+    label.field {
       display: flex;
       flex-direction: column;
       gap: 6px;
-      font-size: 13px;
+      font-size: 12px;
       color: var(--muted);
     }
-    select, input {
-      min-width: 140px;
+    select, input[type="number"] {
+      min-width: 120px;
       padding: 8px 10px;
       border: 1px solid var(--line);
       border-radius: 10px;
@@ -59,86 +294,116 @@
       color: var(--ink);
       font: inherit;
     }
-    button {
-      border: 0;
-      border-radius: 10px;
-      padding: 10px 16px;
-      background: var(--accent);
-      color: var(--accent-ink);
-      font: inherit;
-      cursor: pointer;
+    .moments {
+      height: 100%;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      min-height: 0;
     }
-    button.secondary {
-      background: white;
-      color: var(--ink);
-      border: 1px solid var(--line);
+    .feed {
+      min-height: 0;
+      overflow: auto;
+      display: grid;
+      gap: 10px;
+      padding-right: 2px;
     }
-    button:disabled {
-      opacity: 0.6;
-      cursor: wait;
-    }
-    .status {
-      background: var(--card);
+    article {
+      background: var(--panel);
       border: 1px solid var(--line);
       border-radius: 14px;
       padding: 14px 16px;
-      margin-bottom: 20px;
-      color: var(--muted);
-      line-height: 1.5;
-      white-space: pre-wrap;
-    }
-    .feed {
-      display: grid;
-      gap: 14px;
-    }
-    article {
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      padding: 16px 18px;
+      box-shadow: var(--shadow);
     }
     .meta {
       display: flex;
       justify-content: space-between;
       gap: 12px;
-      margin-bottom: 10px;
-      font-size: 14px;
+      margin-bottom: 8px;
+      font-size: 13px;
     }
     .author { font-weight: 650; }
     .when { color: var(--muted); }
     .body {
       white-space: pre-wrap;
-      line-height: 1.7;
+      line-height: 1.65;
+      font-size: 14px;
     }
-    .empty {
-      color: var(--muted);
-      padding: 40px 8px;
-      text-align: center;
+    .hidden { display: none !important; }
+    @media (max-width: 820px) {
+      .topbar { flex-wrap: wrap; }
+      .chips { max-width: 100%; }
+      .split { grid-template-columns: 1fr; }
     }
-    .warn { color: var(--warn); }
   </style>
 </head>
 <body>
-  <main>
-    <h1>朋友圈时间线</h1>
-    <p class="lede">打开本机已登录的微信，读取当前屏幕上可见的朋友圈，并只存在这台电脑上。采集时请不要操作鼠标。</p>
-    <div class="toolbar">
-      <label>
-        按人筛选
-        <select id="author">
-          <option value="">全部</option>
-        </select>
-      </label>
-      <label>
-        滚动屏数
-        <input id="scrolls" type="number" min="1" max="20" value="8" />
-      </label>
-      <button id="capture" type="button">打开微信并采集</button>
-      <button id="manual" class="secondary" type="button">采集当前窗口</button>
-    </div>
-    <div class="status" id="status">正在读取本地库…</div>
-    <section class="feed" id="feed"></section>
-  </main>
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="mark">M</div>
+        <div>
+          <h1>MomentShow</h1>
+          <p>只读当前屏幕上的微信</p>
+        </div>
+      </div>
+      <nav class="seg">
+        <button id="tab-chat-btn" class="on" type="button">帮我回</button>
+        <button id="tab-moments-btn" type="button">朋友圈</button>
+      </nav>
+      <div class="chips" id="status">加载中</div>
+    </header>
+
+    <main id="tab-chat" class="page">
+      <div class="split">
+        <section class="pane">
+          <div class="pane-head">
+            <div>
+              <h2>当前聊天</h2>
+              <p class="hint">先在微信里打开要回的会话</p>
+            </div>
+            <button id="read-chat" class="primary" type="button">读取窗口</button>
+          </div>
+          <div class="pane-body">
+            <div class="note" id="chat-status">还没有读取聊天。</div>
+            <div class="thread" id="thread"></div>
+          </div>
+        </section>
+        <section class="pane">
+          <div class="pane-head">
+            <div>
+              <h2>回复草稿</h2>
+              <p class="hint">改完再填入，不会自动发送</p>
+            </div>
+          </div>
+          <div class="pane-body">
+            <div class="drafts" id="drafts">
+              <div class="empty">读取聊天后，这里会出现 3 条可编辑草稿。</div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <main id="tab-moments" class="page hidden">
+      <div class="moments">
+        <div class="toolbar">
+          <label class="field">
+            按人筛选
+            <select id="author">
+              <option value="">全部</option>
+            </select>
+          </label>
+          <label class="field">
+            滚动屏数
+            <input id="scrolls" type="number" min="1" max="20" value="8" />
+          </label>
+          <button id="capture" class="primary" type="button">打开微信并采集</button>
+          <button id="manual" class="ghost" type="button">采集当前窗口</button>
+        </div>
+        <section class="feed" id="feed"></section>
+      </div>
+    </main>
+  </div>
   <script>
     const statusEl = document.getElementById("status");
     const feedEl = document.getElementById("feed");
@@ -146,15 +411,55 @@
     const scrollsEl = document.getElementById("scrolls");
     const captureBtn = document.getElementById("capture");
     const manualBtn = document.getElementById("manual");
+    const readChatBtn = document.getElementById("read-chat");
+    const chatStatusEl = document.getElementById("chat-status");
+    const threadEl = document.getElementById("thread");
+    const draftsEl = document.getElementById("drafts");
+    const tabChat = document.getElementById("tab-chat");
+    const tabMoments = document.getElementById("tab-moments");
+    const tabChatBtn = document.getElementById("tab-chat-btn");
+    const tabMomentsBtn = document.getElementById("tab-moments-btn");
+
+    function showTab(name) {
+      const chat = name === "chat";
+      tabChat.classList.toggle("hidden", !chat);
+      tabMoments.classList.toggle("hidden", chat);
+      tabChatBtn.classList.toggle("on", chat);
+      tabMomentsBtn.classList.toggle("on", !chat);
+    }
+
+    function chip(text, kind) {
+      const el = document.createElement("span");
+      el.className = "chip" + (kind ? " " + kind : "");
+      el.textContent = text;
+      return el;
+    }
+
+    function setNote(el, message, warnings) {
+      el.innerHTML = "";
+      el.append(message || "");
+      if (warnings) {
+        const warn = document.createElement("span");
+        warn.className = "warn";
+        warn.textContent = warnings;
+        el.appendChild(warn);
+      }
+    }
 
     async function loadStatus() {
       const data = await fetchJSON("/api/status");
-      const bits = [
-        `本地 ${data.total} 条，${data.authors} 人`,
-        data.wechat_running ? "微信已在运行" : "微信未打开",
-        data.accessibility ? "辅助功能已授权" : "辅助功能未授权",
-      ];
-      statusEl.textContent = bits.join(" · ");
+      statusEl.innerHTML = "";
+      statusEl.append(
+        chip(`${data.total} 条 · ${data.authors} 人`),
+        chip(data.wechat_running ? "微信已打开" : "微信未打开", data.wechat_running ? "ok" : "warn"),
+        chip(data.accessibility ? "辅助功能已授权" : "辅助功能未授权", data.accessibility ? "ok" : "warn"),
+        chip(
+          data.llm_configured
+            ? (data.llm_provider || "模型") + " · " + (data.llm_model || "")
+            : "规则草稿",
+          data.llm_configured ? "ok" : ""
+        )
+      );
     }
 
     async function loadAuthors() {
@@ -177,7 +482,7 @@
       const items = await fetchJSON("/api/moments?author=" + author);
       feedEl.innerHTML = "";
       if (!items.length) {
-        feedEl.innerHTML = '<div class="empty">还没有条目。点「打开微信并采集」，或先手动打开朋友圈再点「采集当前窗口」。</div>';
+        feedEl.innerHTML = '<div class="empty">还没有条目。打开朋友圈后，点「打开微信并采集」或「采集当前窗口」。</div>';
         return;
       }
       for (const item of items) {
@@ -196,9 +501,8 @@
     async function capture(manual) {
       captureBtn.disabled = true;
       manualBtn.disabled = true;
-      statusEl.textContent = manual
-        ? "正在采集当前微信窗口，请稍候…"
-        : "正在打开微信并采集朋友圈，请不要操作鼠标…";
+      statusEl.innerHTML = "";
+      statusEl.append(chip(manual ? "正在采集当前窗口…" : "正在采集朋友圈，请不要操作鼠标…"));
       try {
         const result = await fetchJSON("/api/capture", {
           method: "POST",
@@ -208,19 +512,15 @@
             manual,
           }),
         });
-        const warnings = (result.warnings || []).join("\n");
-        statusEl.innerHTML = "";
-        statusEl.append(result.message || "采集结束");
-        if (warnings) {
-          const warn = document.createElement("div");
-          warn.className = "warn";
-          warn.textContent = warnings;
-          statusEl.appendChild(warn);
+        await loadStatus();
+        if (result.message) {
+          statusEl.prepend(chip(result.message, result.warnings && result.warnings.length ? "warn" : "ok"));
         }
         await loadAuthors();
         await loadMoments();
       } catch (err) {
-        statusEl.textContent = String(err.message || err);
+        statusEl.innerHTML = "";
+        statusEl.append(chip(String(err.message || err), "warn"));
       } finally {
         captureBtn.disabled = false;
         manualBtn.disabled = false;
@@ -246,11 +546,107 @@
       return date.toLocaleString("zh-CN", { hour12: false });
     }
 
+    async function readChat() {
+      readChatBtn.disabled = true;
+      setNote(chatStatusEl, "正在读取当前微信聊天窗口，请不要操作鼠标…");
+      threadEl.innerHTML = "";
+      draftsEl.innerHTML = '<div class="empty">正在生成草稿…</div>';
+      try {
+        const result = await fetchJSON("/api/chat/read", { method: "POST" });
+        renderChat(result);
+        await loadStatus();
+      } catch (err) {
+        setNote(chatStatusEl, String(err.message || err));
+        draftsEl.innerHTML = '<div class="empty">读取失败，请再试一次。</div>';
+      } finally {
+        readChatBtn.disabled = false;
+      }
+    }
+
+    function renderChat(result) {
+      setNote(chatStatusEl, result.message || "读取结束", (result.warnings || []).join("\n"));
+      threadEl.innerHTML = "";
+      const messages = result.messages || [];
+      if (!messages.length) {
+        threadEl.innerHTML = '<div class="empty">当前窗口没有识别到气泡。</div>';
+      } else {
+        for (const item of messages) {
+          const bubble = document.createElement("div");
+          bubble.className = "bubble " + (item.speaker === "me" ? "me" : "them");
+          const who = document.createElement("span");
+          who.className = "who";
+          who.textContent = item.speaker === "me" ? "我" : (result.contact || "对方");
+          const body = document.createElement("div");
+          body.textContent = item.text || "";
+          bubble.append(who, body);
+          threadEl.appendChild(bubble);
+        }
+      }
+
+      draftsEl.innerHTML = "";
+      const drafts = result.drafts || [];
+      if (!drafts.length) {
+        draftsEl.innerHTML = '<div class="empty">没有生成草稿。</div>';
+        return;
+      }
+      for (const draft of drafts) {
+        const card = document.createElement("div");
+        card.className = "draft";
+        const top = document.createElement("div");
+        top.className = "draft-top";
+        const badge = document.createElement("span");
+        badge.className = "badge";
+        badge.textContent = draft.index + " · " + (draft.style || "草稿");
+        top.append(badge);
+        const textarea = document.createElement("textarea");
+        textarea.value = draft.text || "";
+        const actions = document.createElement("div");
+        actions.className = "draft-actions";
+        const fillBtn = document.createElement("button");
+        fillBtn.type = "button";
+        fillBtn.className = "ghost";
+        fillBtn.textContent = "填入";
+        const sendBtn = document.createElement("button");
+        sendBtn.type = "button";
+        sendBtn.className = "primary";
+        sendBtn.textContent = "填入并发送";
+        fillBtn.addEventListener("click", () => fillChat(draft.index, textarea.value, false, fillBtn, sendBtn));
+        sendBtn.addEventListener("click", () => fillChat(draft.index, textarea.value, true, fillBtn, sendBtn));
+        actions.append(fillBtn, sendBtn);
+        card.append(top, textarea, actions);
+        draftsEl.appendChild(card);
+      }
+    }
+
+    async function fillChat(index, text, send, fillBtn, sendBtn) {
+      fillBtn.disabled = true;
+      sendBtn.disabled = true;
+      setNote(chatStatusEl, send ? "正在填入并发送，请不要操作鼠标…" : "正在填入输入框，请不要操作鼠标…");
+      try {
+        const result = await fetchJSON("/api/chat/fill", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ index, text, send }),
+        });
+        setNote(chatStatusEl, result.message || "已完成", (result.warnings || []).join("\n"));
+      } catch (err) {
+        setNote(chatStatusEl, String(err.message || err));
+      } finally {
+        fillBtn.disabled = false;
+        sendBtn.disabled = false;
+      }
+    }
+
     authorEl.addEventListener("change", loadMoments);
     captureBtn.addEventListener("click", () => capture(false));
     manualBtn.addEventListener("click", () => capture(true));
+    readChatBtn.addEventListener("click", readChat);
+    tabChatBtn.addEventListener("click", () => showTab("chat"));
+    tabMomentsBtn.addEventListener("click", () => showTab("moments"));
+    showTab("chat");
     Promise.all([loadStatus(), loadAuthors(), loadMoments()]).catch((err) => {
-      statusEl.textContent = String(err.message || err);
+      statusEl.innerHTML = "";
+      statusEl.append(chip(String(err.message || err), "warn"));
     });
   </script>
 </body>

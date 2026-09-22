@@ -14,3 +14,7 @@ def app_support_dir() -> Path:
 
 def database_path() -> Path:
     return app_support_dir() / "moments.db"
+
+
+def chat_session_path() -> Path:
+    return app_support_dir() / "chat_session.json"

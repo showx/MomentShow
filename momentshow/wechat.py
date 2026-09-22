@@ -18,7 +18,12 @@ from momentshow.axutil import (
     app_element_for_pid,
     click_screen,
     copy_attribute,
+    element_text,
+    paste_clipboard,
     press,
+    press_return,
+    select_all,
+    set_clipboard,
     walk_ax,
     windows_for_app,
 )
@@ -201,3 +206,56 @@ def scroll_window(bounds: dict[str, float], lines: int = 8) -> None:
     time.sleep(0.12)
     event = CGEventCreateScrollWheelEvent(None, kCGScrollEventUnitLine, 1, -abs(lines))
     CGEventPost(kCGHIDEventTap, event)
+
+
+def fill_compose_box(pid: int, bounds: dict[str, float], text: str, *, send: bool) -> str:
+    if not text.strip():
+        raise ValueError("没有可填入的文字。")
+    set_clipboard(text)
+    _focus_compose_box(pid, bounds)
+    time.sleep(0.18)
+    select_all()
+    time.sleep(0.08)
+    paste_clipboard()
+    time.sleep(0.12)
+    if send:
+        press_return()
+        return "已填入并发送。"
+    return "已填入输入框，尚未发送。"
+
+
+def _focus_compose_box(pid: int, bounds: dict[str, float]) -> None:
+    pids = wechat_pids() | {pid}
+    for current in pids:
+        field = _last_text_field(app_element_for_pid(current))
+        if field is None:
+            continue
+        if press(field):
+            return
+        pos = copy_attribute(field, kAXPositionAttribute)
+        size = copy_attribute(field, kAXSizeAttribute)
+        point = _unpack_point(pos)
+        extent = _unpack_size(size)
+        if point and extent:
+            click_screen(point[0] + extent[0] / 2, point[1] + extent[1] / 2)
+            return
+    click_screen(
+        bounds["X"] + bounds["Width"] * 0.62,
+        bounds["Y"] + bounds["Height"] * 0.88,
+    )
+
+
+def _last_text_field(app_el):
+    found = {"el": None}
+
+    def visitor(element, role: str, text: str):
+        if role not in {"AXTextArea", "AXTextField"}:
+            return False
+        label = f"{text} {element_text(element)}".lower()
+        if any(key in label for key in ("搜索", "search")):
+            return False
+        found["el"] = element
+        return False
+
+    walk_ax(app_el, visitor)
+    return found["el"]

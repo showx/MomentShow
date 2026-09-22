@@ -67,6 +67,13 @@ def recognize_lines(cg_image) -> list[OcrLine]:
     return lines
 
 
+def remap_lines(lines: list[OcrLine], nx: float, ny: float, nw: float, nh: float) -> list[OcrLine]:
+    return [
+        OcrLine(text=item.text, x=nx + item.x * nw, y=ny + item.y * nh, w=item.w * nw, h=item.h * nh)
+        for item in lines
+    ]
+
+
 def _unpack_perform(result) -> tuple[bool, object | None]:
     if isinstance(result, tuple):
         ok = result[0]

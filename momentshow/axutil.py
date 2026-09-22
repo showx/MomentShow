@@ -19,14 +19,23 @@ from ApplicationServices import (
     kAXWindowsAttribute,
 )
 from Cocoa import NSDictionary
+from AppKit import NSPasteboard, NSPasteboardTypeString
 from Quartz import (
+    CGEventCreateKeyboardEvent,
     CGEventCreateMouseEvent,
     CGEventPost,
+    CGEventSetFlags,
+    kCGEventFlagMaskCommand,
     kCGEventLeftMouseDown,
     kCGEventLeftMouseUp,
     kCGHIDEventTap,
     kCGMouseButtonLeft,
 )
+
+KEY_COMMAND = 55
+KEY_A = 0
+KEY_V = 9
+KEY_RETURN = 36
 
 
 def accessibility_trusted(prompt: bool = True) -> bool:
@@ -131,3 +140,43 @@ def click_screen(x: float, y: float) -> None:
     for event_type in (kCGEventLeftMouseDown, kCGEventLeftMouseUp):
         event = CGEventCreateMouseEvent(None, event_type, (x, y), kCGMouseButtonLeft)
         CGEventPost(kCGHIDEventTap, event)
+
+
+def set_clipboard(text: str) -> None:
+    pasteboard = NSPasteboard.generalPasteboard()
+    pasteboard.clearContents()
+    pasteboard.setString_forType_(text, NSPasteboardTypeString)
+
+
+def key_press(keycode: int, *, flags: int = 0) -> None:
+    down = CGEventCreateKeyboardEvent(None, keycode, True)
+    up = CGEventCreateKeyboardEvent(None, keycode, False)
+    if flags:
+        CGEventSetFlags(down, flags)
+        CGEventSetFlags(up, flags)
+    CGEventPost(kCGHIDEventTap, down)
+    CGEventPost(kCGHIDEventTap, up)
+
+
+def hotkey(keycode: int, *, command: bool = False) -> None:
+    flags = kCGEventFlagMaskCommand if command else 0
+    if command:
+        command_down = CGEventCreateKeyboardEvent(None, KEY_COMMAND, True)
+        CGEventSetFlags(command_down, kCGEventFlagMaskCommand)
+        CGEventPost(kCGHIDEventTap, command_down)
+    key_press(keycode, flags=flags)
+    if command:
+        command_up = CGEventCreateKeyboardEvent(None, KEY_COMMAND, False)
+        CGEventPost(kCGHIDEventTap, command_up)
+
+
+def paste_clipboard() -> None:
+    hotkey(KEY_V, command=True)
+
+
+def select_all() -> None:
+    hotkey(KEY_A, command=True)
+
+
+def press_return() -> None:
+    key_press(KEY_RETURN)
